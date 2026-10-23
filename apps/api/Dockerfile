@@ -1,6 +1,12 @@
-FROM node:20 AS base
+FROM node:22.23.4-bookworm AS base
 
 WORKDIR /app
+
+# Patched CA store for eMudhra advisory (Render: advisory-emudhra)
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends ca-certificates \
+  && apt-get upgrade -y ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
 
 # Install pnpm and tsx (needed for seed script inside container)
 RUN npm install -g pnpm@8.15.0 tsx@4.7.0
@@ -38,7 +44,7 @@ COPY apps/playground/package.json ./apps/playground/
 # Use --no-frozen-lockfile if lockfile is outdated (will update it)
 RUN pnpm install --frozen-lockfile || pnpm install --no-frozen-lockfile
 
-# Rebuild native modules (like argon2) for the current platform (node:20 Debian)
+# Rebuild native modules (like argon2) for the current platform (node:22 bookworm)
 RUN pnpm rebuild argon2
 
 # Copy source code
@@ -53,9 +59,15 @@ RUN pnpm -r --filter "./packages/*" \
     --filter @crm-atlas/mcp-server build
 
 # Production stage
-FROM node:20 AS production
+FROM node:22.23.4-bookworm AS production
 
 WORKDIR /app
+
+# Patched CA store for eMudhra advisory (Render: advisory-emudhra)
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends ca-certificates \
+  && apt-get upgrade -y ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
 
 # Install pnpm and tsx (needed for seed script inside container)
 RUN npm install -g pnpm@8.15.0 tsx@4.7.0

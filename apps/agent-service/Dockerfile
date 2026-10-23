@@ -1,6 +1,10 @@
-FROM node:20-alpine AS base
+FROM node:22.23.4-alpine AS base
 
 WORKDIR /app
+
+# Patched CA store for eMudhra advisory (Render: advisory-emudhra)
+RUN apk add --no-cache ca-certificates \
+  && apk upgrade --no-cache ca-certificates
 
 RUN npm install -g pnpm@8.15.0
 
@@ -20,9 +24,13 @@ COPY . .
 
 RUN pnpm --filter @crm-atlas/agent-service build
 
-FROM node:20-alpine AS production
+FROM node:22.23.4-alpine AS production
 
 WORKDIR /app
+
+# Patched CA store for eMudhra advisory (Render: advisory-emudhra)
+RUN apk add --no-cache ca-certificates \
+  && apk upgrade --no-cache ca-certificates
 
 RUN npm install -g pnpm@8.15.0
 
